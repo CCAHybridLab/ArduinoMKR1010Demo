@@ -1,4 +1,4 @@
-// Based on WiFiWebClient example
+// based on WiFiWebClient example
 
 #include <SPI.h>
 #include <WiFiNINA.h>
@@ -9,6 +9,8 @@ int sensorValue = 0;
 
 char ssid[] = "ArduinoWifiTest";
 char pass[] = "arduinowifitest";
+// make sure these are the same as in wifiLedSide
+
 int status = WL_IDLE_STATUS;
 IPAddress server(192,168,4,1);  
 
@@ -18,6 +20,10 @@ IPAddress server(192,168,4,1);
 WiFiClient client;
 
 void setup() {
+  // Use built in led to indicate connection status (might be delayed)
+  // On:Connected, Blinking:Connecting
+  pinMode(LED_BUILTIN, OUTPUT);
+  
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
 //  while (!Serial) {
@@ -36,46 +42,45 @@ void setup() {
     Serial.println("Please upgrade the firmware");
   }
 
-  // attempt to connect to WiFi network:
+}
+
+void loop() {  
+  // check connection statue
+  status = WiFi.status();
+  
+  // if not connected attempt to connect to WiFi network:
   while (status != WL_CONNECTED) {
+    sensorValue = 0;
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
 
     status = WiFi.begin(ssid, pass);
 
-    // wait 10 seconds for connection:
-    delay(10000);
+    // wait 1 seconds for connection and blink
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(1000);
+    digitalWrite(LED_BUILTIN, HIGH);
   }
-  Serial.println("Connected to WiFi");
-  printWifiStatus();
-
-
-}
-
-void loop() {
+//  Serial.println("Connected to WiFi");
+//  printWifiStatus();
+  
+  // read voltage on potentiometer
   int sensorReading = map(analogRead(potPin),0,1023,1,255);
+  
+  // If the reading changed, send it through WiFi
   if(sensorValue != sensorReading) {
     sensorValue = sensorReading;
-    Serial.println("\nSensorValue: " + String(sensorValue) + "\nStarting connection to server...");
+    
     // if you get a connection, report back via serial:
     if (client.connect(server, 80)) {
-      Serial.println("connected to server");
-      // Make a HTTP request:
+      // send the sensor reading over WiFi
       client.println(String(sensorValue));
-      client.println();
+      Serial.println("\nSent SensorValue: " + String(sensorValue));
     }
-  }
-  
-
-    // if there are incoming bytes available
-  // from the server, read them and print them:
-  while (client.available()) {
-    char c = client.read();
-    Serial.write(c);
   }
 
   // if the server's disconnected, stop the client:
-  if (!client.connected()) {
+  if (true || !client.connected()) {
 //    Serial.println();
 //    Serial.println("disconnected from server.");
     client.stop();  
