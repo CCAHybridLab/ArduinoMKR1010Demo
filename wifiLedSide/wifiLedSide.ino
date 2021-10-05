@@ -6,8 +6,6 @@
 const int ledPin = 1;
 int brightness = 0;
 
-unsigned long previousMillis = 0; 
-const long interval = 1000; 
 // stop client if inactive for a while
 
 char ssid[] = "ArduinoWifiTest";
@@ -21,7 +19,8 @@ WiFiServer server(80);
 
 
 void setup() {
-  pinMode(ledPin, OUTPUT);
+  pinMode(ledPin, OUTPUT); // set the LED pin mode
+  pinMode(LED_BUILTIN, OUTPUT); // Use built in led to indicate server status
 
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
@@ -29,9 +28,7 @@ void setup() {
 //    ; // wait for serial port to connect. Needed for native USB port only
 //  }
 
-  Serial.println("Access Point Web Server");
-
-  pinMode(ledPin, OUTPUT);      // set the LED pin mode
+  Serial.println("Access Point Web Server"); 
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -63,6 +60,7 @@ void setup() {
 
   // start the web server on port 80
   server.begin();
+  digitalWrite(LED_BUILTIN, HIGH);
 
   // you're connected now, so print out the status
   printWiFiStatus();
@@ -95,14 +93,6 @@ void loop() {
     String currentLine = "";                // make a String to hold incoming data from the client
     
     while (client.connected()) {            // loop while the client's connected
-
-      // if inactive over interval, close the connection
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;
-        client.stop();
-        Serial.println("client disconnected due to inactive");
-      }
       
       delayMicroseconds(10);                // This is required for the Arduino Nano RP2040 Connect - otherwise it will loop so fast that SPI will never be served.
       if (client.available()) {             // if there's bytes to read from the client,
@@ -110,10 +100,9 @@ void loop() {
         // Serial.write(c);                    // print it out the serial monitor
         if (c == '\n') {                    // if the byte is a newline character which is the end to the message
           
-          if (currentLine.toInt()) {
+          if (isValidBrightness(currentLine)) {
             brightness = currentLine.toInt();
-            Serial.println("Brightnss: "+String(brightness));
-            previousMillis = millis();      
+            Serial.println("Brightnss: "+String(brightness));   
             analogWrite(ledPin, brightness);
           }
 
@@ -121,14 +110,10 @@ void loop() {
         }
         else if (c != '\r') {    // if you got anything else but a carriage return character,
           currentLine += c;      // add it to the end of the currentLine
-        }
-        
+        }     
       }
-    }
-    Serial.println("end of whileloop");
-    
-  }
-  
+    }  
+  } 
 }
 
 void printWiFiStatus() {
@@ -145,4 +130,13 @@ void printWiFiStatus() {
   Serial.print("http://");
   Serial.println(ip);
 
+}
+
+boolean isValidBrightness(String s) {
+  for (char c : s) {
+    if(!isDigit(c)) {
+      return false;
+    }
+  }
+  return true;
 }

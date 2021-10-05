@@ -65,7 +65,7 @@ void loop() {
 //  printWifiStatus();
   
   // read voltage on potentiometer
-  int sensorReading = map(analogRead(potPin),0,1023,1,255);
+  int sensorReading = map(analogRead(potPin),0,1023,0,255);
   
   // If the reading changed, send it through WiFi
   if(sensorValue != sensorReading) {
