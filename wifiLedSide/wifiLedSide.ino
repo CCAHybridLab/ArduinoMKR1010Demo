@@ -68,14 +68,12 @@ void setup() {
 }
 
 void loop() {
-  // brightness = (brightness + 8) % 255;
   analogWrite(ledPin, brightness);
-  // delay(100);
 
   if (status != WiFi.status()) {
     // it has changed update the variable
     status = WiFi.status();
-
+    Serial.println("WiFi status updated");
     if (status == WL_AP_CONNECTED) {
       // a device has connected to the AP
       Serial.println("Device connected to AP");
@@ -86,15 +84,14 @@ void loop() {
     }
   }
 
-  WiFiClient client = server.available();  
-  // listen for incoming clients
+  WiFiClient client = server.available();   // listen for incoming clients
   if (client) {                             // if you get a client,
-    Serial.println("new client");           // print a message out the serial port
+    // Serial.println("new client");           // print a message out the serial port
     String currentLine = "";                // make a String to hold incoming data from the client
     
-    while (client.connected()) {            // loop while the client's connected
-      
+    while (client.connected()) {            // loop while the client's connected  
       delayMicroseconds(10);                // This is required for the Arduino Nano RP2040 Connect - otherwise it will loop so fast that SPI will never be served.
+      
       if (client.available()) {             // if there's bytes to read from the client,
         char c = client.read();             // read a byte, then
         // Serial.write(c);                    // print it out the serial monitor
@@ -103,7 +100,9 @@ void loop() {
           if (isValidBrightness(currentLine)) {
             brightness = currentLine.toInt();
             Serial.println("Brightnss: "+String(brightness));   
-            analogWrite(ledPin, brightness);
+            
+            analogWrite(ledPin, brightness);   
+            break;       
           }
 
           currentLine = "";
@@ -112,7 +111,8 @@ void loop() {
           currentLine += c;      // add it to the end of the currentLine
         }     
       }
-    }  
+    }
+    client.stop();
   } 
 }
 

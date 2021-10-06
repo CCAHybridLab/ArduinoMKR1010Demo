@@ -75,16 +75,11 @@ void loop() {
     if (client.connect(server, 80)) {
       // send the sensor reading over WiFi
       client.println(String(sensorValue));
-      Serial.println("\nSent SensorValue: " + String(sensorValue));
+      Serial.println("Sent SensorValue: " + String(sensorValue));
+      client.stop();
     }
   }
 
-  // if the server's disconnected, stop the client:
-  if (true || !client.connected()) {
-//    Serial.println();
-//    Serial.println("disconnected from server.");
-    client.stop();  
-  }
   delay(30);
 }
 
